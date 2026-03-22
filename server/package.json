@@ -9,13 +9,13 @@
     "start": "node server.js"
   },
   "dependencies": {
-    "@huggingface/inference": "^latest",
-    "@supabase/supabase-js": "^latest",
-    "cors": "^latest",
-    "dotenv": "^latest",
-    "express": "^latest"
+    "@huggingface/inference": "^2.8.1",
+    "@supabase/supabase-js": "^2.49.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2"
   },
   "devDependencies": {
-    "nodemon": "^latest"
+    "nodemon": "^3.1.14"
   }
 }

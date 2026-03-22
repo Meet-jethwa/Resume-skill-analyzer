@@ -1,0 +1,21 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon server.js",
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@huggingface/inference": "^latest",
+    "@supabase/supabase-js": "^latest",
+    "cors": "^latest",
+    "dotenv": "^latest",
+    "express": "^latest"
+  },
+  "devDependencies": {
+    "nodemon": "^latest"
+  }
+}

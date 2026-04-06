@@ -5,8 +5,8 @@
   "main": "server.js",
   "type": "module",
   "scripts": {
-    "dev": "nodemon server.js",
-    "start": "node server.js"
+    "build": "echo build",
+    "start": "echo start"
   },
   "dependencies": {
     "@huggingface/inference": "^4.13.15",

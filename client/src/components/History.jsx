@@ -3,7 +3,7 @@ import axios from 'axios'
 import './History.css'
 
 export default function History({ onBack }) {
-  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5001'
+  const apiUrl = import.meta.env.VITE_API_URL || ''
 
   const [analyses, setAnalyses] = useState([])
   const [loading, setLoading] = useState(true)
@@ -33,7 +33,9 @@ export default function History({ onBack }) {
     if (!confirm('Delete this analysis?')) return
 
     try {
-      await axios.delete(`${apiUrl}/api/history/${id}`)
+      await axios.delete(`${apiUrl}/api/history`, {
+        params: { id },
+      })
       setAnalyses(analyses.filter(a => a.id !== id))
       if (selectedAnalysis?.id === id) {
         setSelectedAnalysis(null)

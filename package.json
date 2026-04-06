@@ -1,0 +1,18 @@
+{
+  "name": "resume-skill-analyzer",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "npm --prefix client run build",
+    "dev:client": "npm --prefix client run dev",
+    "dev:server": "npm --prefix server run dev"
+  },
+  "dependencies": {
+    "@huggingface/inference": "^4.13.15",
+    "@supabase/supabase-js": "^2.49.1",
+    "formidable": "^3.5.4",
+    "pdf-parse": "^2.4.5",
+    "uuid": "^13.0.0"
+  }
+}

@@ -1,304 +1,223 @@
-﻿# Cloud Resume Skill Analyzer
+# Resume Skill Analyzer
 
-An intelligent resume analysis tool that extracts skills from resumes (text or PDF), compares them with job descriptions, scores resumes, and maintains analysis history. Built with Express, React, HuggingFace NER, and Supabase.
+Resume Skill Analyzer is a full-stack web app that analyzes resume content (text or PDF), detects skills, suggests roles, calculates a score, and stores history in Supabase.
 
-## Features
+This project is configured for Vercel deployment with serverless API routes in the root api folder.
 
-### Quick Analysis
-- **Text & PDF Upload** - Paste resume text or upload PDF files
-- **AI Skill Detection** - Uses HuggingFace BERT-NER for accurate skill extraction
-- **Copy to Clipboard** - One-click copy of detected skills
-- **Skill Count Badge** - Visual badge showing total skills detected
-- **Clear/Reset Button** - Clear all inputs and results instantly
+## Architecture
 
-### Advanced Features
-- **Resume Scoring** - Get a 0-10 score based on:
-  - Number of skills detected
-  - Skill category diversity
-  - Presence of action keywords
-- **Job Match Analysis** - Paste a job description to see:
-  - Percentage match (X% match)
-  - Skills matched vs required
-  - Missing or gap skills
-- **Role Suggestions** - Get recommended job roles based on detected skills
-- **Role Filtering** - Filter suggestions by category (Frontend, Backend, Data, DevOps, Database)
-- **Analysis History** - View all past analyses with:
-  - Detailed skill breakdown by category
-  - Resume scores
-  - Suggested roles
-  - Quick delete/view options
+- Frontend: Vite + React in client
+- Backend: Vercel Serverless Functions in api
+- Database: Supabase PostgreSQL
+- AI Skill Extraction: Hugging Face Inference API
 
 ## Project Structure
 
-```
+```text
 resume-skill-analyzer/
-â”œâ”€â”€ server/                          # Node.js Express backend
-â”‚   â”œâ”€â”€ routes/
-â”‚   â”‚   â”œâ”€â”€ analyze.js              # Resume analysis endpoint
-â”‚   â”‚   â””â”€â”€ history.js              # History management endpoint
-â”‚   â”œâ”€â”€ config/
-â”‚   â”‚   â””â”€â”€ supabaseClient.js        # Supabase connection
-â”‚   â”œâ”€â”€ server.js                   # Express app setup
-â”‚   â”œâ”€â”€ package.json
-â”‚   â”œâ”€â”€ .env                        # Environment variables
-â”‚   â””â”€â”€ .env.example                # Environment template
-â”œâ”€â”€ client/                          # React + Vite frontend
-â”‚   â”œâ”€â”€ src/
-â”‚   â”‚   â”œâ”€â”€ components/
-â”‚   â”‚   â”‚   â”œâ”€â”€ ResumeForm.jsx      # Main analysis form
-â”‚   â”‚   â”‚   â”œâ”€â”€ History.jsx         # History page
-â”‚   â”‚   â”‚   â””â”€â”€ *.css               # Component styles
-â”‚   â”‚   â”œâ”€â”€ App.jsx                 # Main app with routing
-â”‚   â”‚   â”œâ”€â”€ App.css                 # Main styles
-â”‚   â”‚   â””â”€â”€ main.jsx
-â”‚   â”œâ”€â”€ index.html
-â”‚   â”œâ”€â”€ package.json
-â”‚   â””â”€â”€ vite.config.js
-â”œâ”€â”€ requirements.txt                 # Dependencies list
-â””â”€â”€ README.md                        # This file
+|-- api/
+|   |-- analyze.js
+|   `-- history.js
+|-- client/
+|   |-- src/
+|   |   |-- components/
+|   |   |   |-- History.jsx
+|   |   |   `-- ResumeForm.jsx
+|   |   |-- App.jsx
+|   |   |-- App.css
+|   |   `-- index.css
+|   |-- package.json
+|   `-- vite.config.js
+|-- server/                     # Old local backend files (not used in deployment)
+|-- package.json                # Root package for Vercel build + API deps
+|-- vercel.json
+`-- README.md
 ```
 
-## Setup Instructions
+## Features
 
-### Prerequisites
-- Node.js 16+ and npm
-- Supabase account with PostgreSQL database
-- HuggingFace API token
+- Resume text analysis
+- PDF upload support
+- Skill detection + suggested roles
+- Resume score out of 10
+- Job description match percentage + missing skills
+- Analysis history with delete support
 
-### 1. Clone & Install Dependencies
+## Prerequisites
 
-```bash
-# Backend
-cd server
-npm install
+- Node.js 18+
+- npm
+- Supabase project
+- Hugging Face token
+- Vercel account
 
-# Frontend
-cd ../client
-npm install
+## Environment Variables
+
+Create these in Vercel Project Settings and optionally in local env files.
+
+### Required
+
+- SUPABASE_URL
+- SUPABASE_ANON_KEY
+- HF_TOKEN
+- VITE_API_URL (optional for Vercel, required for local split frontend/backend)
+
+### Local Example
+
+.env.local
+
+```env
+SUPABASE_URL=https://your-project-ref.supabase.co
+SUPABASE_ANON_KEY=your-supabase-anon-key
+HF_TOKEN=hf_your_huggingface_token
+VITE_API_URL=http://localhost:3000
 ```
 
-### 2. Environment Configuration
+For Vercel production, you can leave VITE_API_URL unset because frontend falls back to same-origin /api.
 
-**Backend** (`server/.env`):
-```bash
-HF_TOKEN=your_huggingface_token
-SUPABASE_URL=your_supabase_url
-SUPABASE_ANON_KEY=your_supabase_anon_key
-PORT=5000
-```
+## Supabase Table Setup
 
-**Frontend** (`client/.env` or `client/.env.local`):
-```bash
-VITE_API_URL=http://localhost:5000
-```
-
-### 3. Database Setup
-
-Create a `resume_results` table in Supabase with the following schema:
+Run this SQL in Supabase SQL Editor:
 
 ```sql
-CREATE TABLE resume_results (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  input_text TEXT NOT NULL,
-  detected_skills TEXT[] NOT NULL,
-  suggested_roles TEXT[] NOT NULL,
-  resume_score NUMERIC(2,1),
-  job_description TEXT,
-  skill_match JSONB,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+create extension if not exists "pgcrypto";
+
+create table if not exists public.resume_results (
+  id uuid primary key default gen_random_uuid(),
+  input_text text not null,
+  detected_skills text[] not null default '{}',
+  suggested_roles text[] not null default '{}',
+  resume_score numeric(3,1),
+  job_description text,
+  skill_match jsonb,
+  created_at timestamptz not null default now()
 );
+
+create index if not exists idx_resume_results_created_at
+  on public.resume_results (created_at desc);
 ```
 
-### 4. Start Development Servers
+If RLS is enabled, add policies for anon access:
+
+```sql
+alter table public.resume_results enable row level security;
+
+create policy "resume_results_select"
+on public.resume_results
+for select
+to anon
+using (true);
+
+create policy "resume_results_insert"
+on public.resume_results
+for insert
+to anon
+with check (true);
+
+create policy "resume_results_delete"
+on public.resume_results
+for delete
+to anon
+using (true);
+```
+
+## Local Development
+
+Install dependencies:
 
 ```bash
-# Terminal 1 - Backend (from server/)
-npm run dev
+# root deps for /api functions
+npm install
 
-# Terminal 2 - Frontend (from client/)
-npm run dev
+# frontend deps
+npm --prefix client install
 ```
 
-Access the app at `http://localhost:5173`
-
-## API Documentation
-
-### POST `/api/analyze`
-Analyze a resume and optionally compare with job description.
-
-**Request:**
-```json
-{
-  "resumeText": "string (optional if PDF provided)",
-  "jobDescription": "string (optional)",
-  "pdf": "file (optional if text provided)"
-}
-```
-
-**Response:**
-```json
-{
-  "id": "uuid",
-  "skills": ["Python", "React", "AWS"],
-  "suggestedRoles": ["Full Stack Developer"],
-  "resumeScore": 7.5,
-  "skillCount": 3,
-  "skillMatch": {
-    "matchPercentage": 60,
-    "matchedCount": 6,
-    "totalRequired": 10,
-    "missingSkills": ["Kubernetes", "TypeScript"]
-  }
-}
-```
-
-### GET `/api/history`
-Fetch all past analyses.
-
-**Response:**
-```json
-{
-  "analyses": [
-    {
-      "id": "uuid",
-      "detected_skills": ["Python", "React"],
-      "suggested_roles": ["Frontend Developer"],
-      "resume_score": 7.2,
-      "skillCount": 2,
-      "createdAt": "4/7/2026"
-    }
-  ]
-}
-```
-
-### GET `/api/history/:id`
-Get details of a specific analysis.
-
-### DELETE `/api/history/:id`
-Delete an analysis by ID.
-
-## How It Works
-
-### Skill Detection
-1. **Keyword Matching** - Scans resume against predefined skill database
-2. **NER (Named Entity Recognition)** - Uses HuggingFace BERT to catch unknown skills
-3. **Deduplication** - Combines both sources and removes duplicates
-
-### Resume Scoring Algorithm
-- **Skill Count** (up to 4 points) - More skills = higher score
-- **Category Diversity** (up to 3 points) - Skills across multiple categories
-- **Action Keywords** (up to 3 points) - Presence of achievement verbs
-
-**Result:** 0-10 score
-
-### Job Matching
-- Extracts skills from job description using same NER process
-- Compares with resume skills (case-insensitive)
-- Returns match percentage and gap analysis
-
-## Supported Skills
-
-### Frontend
-React, Vue, Angular, JavaScript, TypeScript, HTML, CSS
-
-### Backend
-Node, Python, Java, C#, Flask, Django
-
-### Database
-SQL, MongoDB, PostgreSQL, MySQL, Firebase
-
-### Cloud & DevOps
-AWS, Docker, Kubernetes, Linux, Azure, GCP
-
-### Data Science
-Python, TensorFlow, Pandas, NumPy, Scikit-learn
-
-## Technologies
-
-**Backend:**
-- Express.js - Web framework
-- HuggingFace Inference - NER model
-- Multer - File uploads
-- pdf-parse - PDF text extraction
-- Supabase/PostgreSQL - Database
-
-**Frontend:**
-- React 19 - UI library
-- Vite - Build tool
-- Axios - HTTP client
-- CSS3 - Styling
-
-## Development
-
-### Building for Production
-
-**Frontend:**
-```bash
-cd client
-npm run build
-npm run preview
-```
-
-**Backend:**
-```bash
-cd server
-npm start
-```
-
-### Useful Commands
+Run frontend only:
 
 ```bash
-# Frontend linting
-cd client && npm run lint
-
-# Backend with auto-reload
-cd server && npm run dev
-
-# Production build
-npm run build
+npm --prefix client run dev
 ```
+
+Run frontend + serverless API together (recommended):
+
+```bash
+npm i -g vercel
+vercel dev
+```
+
+## Vercel Deployment Guide (Step-by-Step)
+
+### 1. Push to GitHub
+
+```bash
+git add .
+git commit -m "migrate to vercel serverless api"
+git push
+```
+
+### 2. Import Project in Vercel
+
+- Open Vercel dashboard
+- Click New Project
+- Select this GitHub repository
+- Keep root directory as repository root
+
+### 3. Build Settings
+
+This repo already includes vercel.json with:
+
+- installCommand: npm install && npm --prefix client install
+- buildCommand: npm run build
+- outputDirectory: client/dist
+- functions: api/*.js on nodejs20.x
+
+No manual build override is required unless you changed config.
+
+### 4. Add Environment Variables in Vercel
+
+Project Settings > Environment Variables:
+
+- SUPABASE_URL
+- SUPABASE_ANON_KEY
+- HF_TOKEN
+- VITE_API_URL (optional; set to your deployed URL only if needed)
+
+### 5. Deploy
+
+- Click Deploy
+- Wait for build to complete
+- Open deployed URL
+
+## API Routes (Vercel)
+
+- POST /api/analyze
+- GET /api/history
+- GET /api/history?id=<uuid>
+- DELETE /api/history?id=<uuid>
 
 ## Troubleshooting
 
-### PDF upload fails
-- Check file permissions and MIME type (application/pdf)
-- Ensure PDF is not corrupted
+### 1. EADDRINUSE locally
 
-### No skills detected
-- Ensure resume has recognizable tech skills
-- Check HuggingFace API token is valid
-- View browser console for API errors
+A local port is occupied. Kill the process on that port and restart.
 
-### Job matching shows 0% match
-- Ensure job description contains actual skills (not just requirements)
-- Check both are formatted clearly
+### 2. Supabase PGRST204 missing column
 
-### History not loading
-- Verify Supabase database credentials
-- Check CORS settings if hosted remotely
-- Ensure table schema matches requirements
+Your resume_results schema is incomplete. Re-run the SQL table setup above.
 
-## Future Enhancements
+### 3. Hugging Face endpoint warning
 
-- [ ] Shareable analysis links
-- [ ] Resume templates and formatting tips
-- [ ] Email analysis results
-- [ ] Batch resume processing
-- [ ] Skill trend analytics
-- [ ] Interview prep based on detected skills
-- [ ] Integration with job boards (LinkedIn, Indeed)
+Use latest @huggingface/inference (already configured in root package.json).
+
+### 4. README not rendering correctly on GitHub
+
+Ensure README.md is UTF-8 and does not include accidental appended lines.
+
+## Security Note
+
+If any key or token was accidentally exposed in screenshots, logs, or commits, rotate it immediately.
 
 ## License
 
-MIT License - Feel free to use and modify for your projects.
-
-## Support
-
-For issues or feature requests, please create an issue or contact the development team.
-
----
-
-Built for job seekers everywhere.
- 
- 
-
+MIT

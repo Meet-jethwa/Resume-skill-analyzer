@@ -2,7 +2,7 @@ import { useState } from 'react'
 import axios from 'axios'
 
 export default function ResumeForm() {
-  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5001'
+  const apiUrl = import.meta.env.VITE_API_URL || ''
 
   const [resumeText, setResumeText] = useState('')
   const [jobDescription, setJobDescription] = useState('')

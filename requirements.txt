@@ -1,0 +1,32 @@
+# Resume Skill Analyzer - Dependencies
+
+## Backend (Node.js)
+- Node.js >= 16
+- express@^4.21.2 - Web framework
+- @huggingface/inference@^2.8.1 - HuggingFace NER model
+- @supabase/supabase-js@^2.49.1 - Supabase client
+- cors@^2.8.5 - Cross-origin resource sharing
+- dotenv@^16.4.7 - Environment variables
+- multer@^2.1.1 - File upload handling
+- pdf-parse@^2.4.5 - PDF text extraction
+- uuid@^13.0.0 - Unique ID generation
+- nodemon@^3.1.14 - Development auto-reload
+
+## Frontend (Node.js + React)
+- Node.js >= 16
+- react@^19.2.4 - UI library
+- react-dom@^19.2.4 - React DOM
+- axios@^1.13.6 - HTTP client
+- @supabase/supabase-js@^2.99.3 - Supabase client
+- vite@^8.0.1 - Build tool
+- eslint@^9.39.4 - Code linting
+
+## Database
+- Supabase PostgreSQL database
+
+## Environment Requirements
+- .env file with:
+  - VITE_API_URL=http://localhost:5000
+  - HF_TOKEN (HuggingFace API token)
+  - SUPABASE_URL
+  - SUPABASE_ANON_KEY

@@ -1,0 +1,301 @@
+# Cloud Resume Skill Analyzer
+
+An intelligent resume analysis tool that extracts skills from resumes (text or PDF), compares them with job descriptions, scores resumes, and maintains analysis history. Built with Express, React, HuggingFace NER, and Supabase.
+
+## Features
+
+### Quick Analysis
+- **Text & PDF Upload** - Paste resume text or upload PDF files
+- **AI Skill Detection** - Uses HuggingFace BERT-NER for accurate skill extraction
+- **Copy to Clipboard** - One-click copy of detected skills
+- **Skill Count Badge** - Visual badge showing total skills detected
+- **Clear/Reset Button** - Clear all inputs and results instantly
+
+### Advanced Features
+- **Resume Scoring** - Get a 0-10 score based on:
+  - Number of skills detected
+  - Skill category diversity
+  - Presence of action keywords
+- **Job Match Analysis** - Paste a job description to see:
+  - Percentage match (X% match)
+  - Skills matched vs required
+  - Missing or gap skills
+- **Role Suggestions** - Get recommended job roles based on detected skills
+- **Role Filtering** - Filter suggestions by category (Frontend, Backend, Data, DevOps, Database)
+- **Analysis History** - View all past analyses with:
+  - Detailed skill breakdown by category
+  - Resume scores
+  - Suggested roles
+  - Quick delete/view options
+
+## Project Structure
+
+```
+resume-skill-analyzer/
+├── server/                          # Node.js Express backend
+│   ├── routes/
+│   │   ├── analyze.js              # Resume analysis endpoint
+│   │   └── history.js              # History management endpoint
+│   ├── config/
+│   │   └── supabaseClient.js        # Supabase connection
+│   ├── server.js                   # Express app setup
+│   ├── package.json
+│   ├── .env                        # Environment variables
+│   └── .env.example                # Environment template
+├── client/                          # React + Vite frontend
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── ResumeForm.jsx      # Main analysis form
+│   │   │   ├── History.jsx         # History page
+│   │   │   └── *.css               # Component styles
+│   │   ├── App.jsx                 # Main app with routing
+│   │   ├── App.css                 # Main styles
+│   │   └── main.jsx
+│   ├── index.html
+│   ├── package.json
+│   └── vite.config.js
+├── requirements.txt                 # Dependencies list
+└── README.md                        # This file
+```
+
+## Setup Instructions
+
+### Prerequisites
+- Node.js 16+ and npm
+- Supabase account with PostgreSQL database
+- HuggingFace API token
+
+### 1. Clone & Install Dependencies
+
+```bash
+# Backend
+cd server
+npm install
+
+# Frontend
+cd ../client
+npm install
+```
+
+### 2. Environment Configuration
+
+**Backend** (`server/.env`):
+```bash
+HF_TOKEN=your_huggingface_token
+SUPABASE_URL=your_supabase_url
+SUPABASE_ANON_KEY=your_supabase_anon_key
+PORT=5000
+```
+
+**Frontend** (`client/.env` or `client/.env.local`):
+```bash
+VITE_API_URL=http://localhost:5000
+```
+
+### 3. Database Setup
+
+Create a `resume_results` table in Supabase with the following schema:
+
+```sql
+CREATE TABLE resume_results (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  input_text TEXT NOT NULL,
+  detected_skills TEXT[] NOT NULL,
+  suggested_roles TEXT[] NOT NULL,
+  resume_score NUMERIC(2,1),
+  job_description TEXT,
+  skill_match JSONB,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+```
+
+### 4. Start Development Servers
+
+```bash
+# Terminal 1 - Backend (from server/)
+npm run dev
+
+# Terminal 2 - Frontend (from client/)
+npm run dev
+```
+
+Access the app at `http://localhost:5173`
+
+## API Documentation
+
+### POST `/api/analyze`
+Analyze a resume and optionally compare with job description.
+
+**Request:**
+```json
+{
+  "resumeText": "string (optional if PDF provided)",
+  "jobDescription": "string (optional)",
+  "pdf": "file (optional if text provided)"
+}
+```
+
+**Response:**
+```json
+{
+  "id": "uuid",
+  "skills": ["Python", "React", "AWS"],
+  "suggestedRoles": ["Full Stack Developer"],
+  "resumeScore": 7.5,
+  "skillCount": 3,
+  "skillMatch": {
+    "matchPercentage": 60,
+    "matchedCount": 6,
+    "totalRequired": 10,
+    "missingSkills": ["Kubernetes", "TypeScript"]
+  }
+}
+```
+
+### GET `/api/history`
+Fetch all past analyses.
+
+**Response:**
+```json
+{
+  "analyses": [
+    {
+      "id": "uuid",
+      "detected_skills": ["Python", "React"],
+      "suggested_roles": ["Frontend Developer"],
+      "resume_score": 7.2,
+      "skillCount": 2,
+      "createdAt": "4/7/2026"
+    }
+  ]
+}
+```
+
+### GET `/api/history/:id`
+Get details of a specific analysis.
+
+### DELETE `/api/history/:id`
+Delete an analysis by ID.
+
+## How It Works
+
+### Skill Detection
+1. **Keyword Matching** - Scans resume against predefined skill database
+2. **NER (Named Entity Recognition)** - Uses HuggingFace BERT to catch unknown skills
+3. **Deduplication** - Combines both sources and removes duplicates
+
+### Resume Scoring Algorithm
+- **Skill Count** (up to 4 points) - More skills = higher score
+- **Category Diversity** (up to 3 points) - Skills across multiple categories
+- **Action Keywords** (up to 3 points) - Presence of achievement verbs
+
+**Result:** 0-10 score
+
+### Job Matching
+- Extracts skills from job description using same NER process
+- Compares with resume skills (case-insensitive)
+- Returns match percentage and gap analysis
+
+## Supported Skills
+
+### Frontend
+React, Vue, Angular, JavaScript, TypeScript, HTML, CSS
+
+### Backend
+Node, Python, Java, C#, Flask, Django
+
+### Database
+SQL, MongoDB, PostgreSQL, MySQL, Firebase
+
+### Cloud & DevOps
+AWS, Docker, Kubernetes, Linux, Azure, GCP
+
+### Data Science
+Python, TensorFlow, Pandas, NumPy, Scikit-learn
+
+## Technologies
+
+**Backend:**
+- Express.js - Web framework
+- HuggingFace Inference - NER model
+- Multer - File uploads
+- pdf-parse - PDF text extraction
+- Supabase/PostgreSQL - Database
+
+**Frontend:**
+- React 19 - UI library
+- Vite - Build tool
+- Axios - HTTP client
+- CSS3 - Styling
+
+## Development
+
+### Building for Production
+
+**Frontend:**
+```bash
+cd client
+npm run build
+npm run preview
+```
+
+**Backend:**
+```bash
+cd server
+npm start
+```
+
+### Useful Commands
+
+```bash
+# Frontend linting
+cd client && npm run lint
+
+# Backend with auto-reload
+cd server && npm run dev
+
+# Production build
+npm run build
+```
+
+## Troubleshooting
+
+### PDF upload fails
+- Check file permissions and MIME type (application/pdf)
+- Ensure PDF is not corrupted
+
+### No skills detected
+- Ensure resume has recognizable tech skills
+- Check HuggingFace API token is valid
+- View browser console for API errors
+
+### Job matching shows 0% match
+- Ensure job description contains actual skills (not just requirements)
+- Check both are formatted clearly
+
+### History not loading
+- Verify Supabase database credentials
+- Check CORS settings if hosted remotely
+- Ensure table schema matches requirements
+
+## Future Enhancements
+
+- [ ] Shareable analysis links
+- [ ] Resume templates and formatting tips
+- [ ] Email analysis results
+- [ ] Batch resume processing
+- [ ] Skill trend analytics
+- [ ] Interview prep based on detected skills
+- [ ] Integration with job boards (LinkedIn, Indeed)
+
+## License
+
+MIT License - Feel free to use and modify for your projects.
+
+## Support
+
+For issues or feature requests, please create an issue or contact the development team.
+
+---
+
+Built for job seekers everywhere.

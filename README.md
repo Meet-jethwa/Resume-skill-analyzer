@@ -196,6 +196,33 @@ Project Settings > Environment Variables:
 - GET /api/history?id=<uuid>
 - DELETE /api/history?id=<uuid>
 
+## Frontend Integration (React)
+
+Use same-origin API calls in production:
+
+```js
+async function analyzeResume(text) {
+  const res = await fetch('/api/analyze', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ input_text: text }),
+  });
+
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Analyze failed');
+  return data;
+}
+
+async function getHistory() {
+  const res = await fetch('/api/history');
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'History fetch failed');
+  return data;
+}
+```
+
 ## Troubleshooting
 
 ### 1. EADDRINUSE locally

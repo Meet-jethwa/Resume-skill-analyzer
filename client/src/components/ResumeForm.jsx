@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import axios from 'axios'
 
 export default function ResumeForm() {
   const apiUrl = import.meta.env.VITE_API_URL || ''
@@ -44,30 +43,47 @@ export default function ResumeForm() {
     setRoleFilter('all')
 
     try {
-      const formData = new FormData()
+      const endpoint = `${apiUrl}/api/analyze`
+      let response
+
       if (pdfFile) {
+        const formData = new FormData()
         formData.append('pdf', pdfFile)
-      } else {
-        formData.append('resumeText', resumeText)
-      }
-      if (jobDescription.trim()) {
-        formData.append('jobDescription', jobDescription)
-      }
-
-      const res = await axios.post(
-        `${apiUrl}/api/analyze`,
-        formData,
-        {
-          headers: pdfFile ? { 'Content-Type': 'multipart/form-data' } : {}
+        if (resumeText.trim()) {
+          formData.append('input_text', resumeText.trim())
         }
-      )
+        if (jobDescription.trim()) {
+          formData.append('jobDescription', jobDescription.trim())
+        }
 
-      setSkills(res.data.skills)
-      setRoles(res.data.suggestedRoles)
-      setResumeScore(res.data.resumeScore)
-      setSkillMatch(res.data.skillMatch)
+        response = await fetch(endpoint, {
+          method: 'POST',
+          body: formData,
+        })
+      } else {
+        response = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            input_text: resumeText.trim(),
+            jobDescription: jobDescription.trim() || undefined,
+          }),
+        })
+      }
+
+      const data = await response.json()
+      if (!response.ok) {
+        throw new Error(data.error || 'Analysis failed')
+      }
+
+      setSkills(data.skills || [])
+      setRoles(data.suggestedRoles || [])
+      setResumeScore(data.resumeScore ?? null)
+      setSkillMatch(data.skillMatch ?? null)
     } catch (err) {
-      setError('Analysis failed. Make sure the server is running.')
+      setError(err.message || 'Analysis failed. Make sure the server is running.')
     } finally {
       setLoading(false)
     }

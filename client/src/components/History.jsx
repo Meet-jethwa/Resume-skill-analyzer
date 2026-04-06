@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
 import './History.css'
 
 export default function History({ onBack }) {
@@ -18,12 +17,17 @@ export default function History({ onBack }) {
   const fetchHistory = async () => {
     try {
       setLoading(true)
-      const res = await axios.get(`${apiUrl}/api/history`)
-      setAnalyses(res.data.analyses)
+      const response = await fetch(`${apiUrl}/api/history`)
+      const data = await response.json()
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to load history')
+      }
+
+      setAnalyses(Array.isArray(data) ? data : (data.analyses || []))
       setError('')
     } catch (err) {
       console.error(err)
-      setError('Failed to load history')
+      setError(err.message || 'Failed to load history')
     } finally {
       setLoading(false)
     }
@@ -33,16 +37,21 @@ export default function History({ onBack }) {
     if (!confirm('Delete this analysis?')) return
 
     try {
-      await axios.delete(`${apiUrl}/api/history`, {
-        params: { id },
+      const response = await fetch(`${apiUrl}/api/history?id=${encodeURIComponent(id)}`, {
+        method: 'DELETE',
       })
+      const data = await response.json()
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to delete analysis')
+      }
+
       setAnalyses(analyses.filter(a => a.id !== id))
       if (selectedAnalysis?.id === id) {
         setSelectedAnalysis(null)
       }
     } catch (err) {
       console.error(err)
-      setError('Failed to delete analysis')
+      setError(err.message || 'Failed to delete analysis')
     }
   }
 

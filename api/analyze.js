@@ -71,6 +71,14 @@ const toStringValue = (value) => {
   return String(first);
 };
 
+const readRawBody = async (req) => {
+  const chunks = [];
+  for await (const chunk of req) {
+    chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk);
+  }
+  return Buffer.concat(chunks).toString('utf8');
+};
+
 const parseRequestBody = async (req) => {
   const contentType = req.headers['content-type'] || '';
 
@@ -92,16 +100,17 @@ const parseRequestBody = async (req) => {
     });
   }
 
-  let body = req.body || {};
-  if (typeof body === 'string') {
-    try {
-      body = JSON.parse(body);
-    } catch {
-      body = {};
-    }
+  const rawBody = await readRawBody(req);
+  if (!rawBody) {
+    return { fields: {}, files: {} };
   }
 
-  return { fields: body, files: {} };
+  try {
+    const body = JSON.parse(rawBody);
+    return { fields: body && typeof body === 'object' ? body : {}, files: {} };
+  } catch {
+    return { fields: {}, files: {} };
+  }
 };
 
 const extractTextFromPDF = async (pdfFile) => {
@@ -192,7 +201,7 @@ export default async function handler(req, res) {
   try {
     const { fields, files } = await parseRequestBody(req);
 
-    let resumeText = toStringValue(fields.resumeText).trim();
+    let resumeText = toStringValue(fields.input_text ?? fields.resumeText).trim();
     const jobDescription = toStringValue(fields.jobDescription).trim();
 
     const pdfFile = getFirstValue(files.pdf);

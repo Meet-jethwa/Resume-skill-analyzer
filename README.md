@@ -28,10 +28,19 @@ resume-skill-analyzer/
 |   |   `-- index.css
 |   |-- package.json
 |   `-- vite.config.js
-|-- server/                     # Old local backend files (not used in deployment)
 |-- package.json                # Root package for Vercel build + API deps
 |-- vercel.json
 `-- README.md
+```
+
+Required deployment shape:
+
+```text
+resume-skill-analyzer/
+|-- api/
+|   |-- analyze.js
+|   `-- history.js
+`-- package.json
 ```
 
 ## Features
@@ -170,7 +179,7 @@ This repo already includes vercel.json with:
 - installCommand: npm install && npm --prefix client install
 - buildCommand: npm run build
 - outputDirectory: client/dist
-- functions: api/*.js on nodejs20.x
+- functions: api/*.js on nodejs@20.x
 
 No manual build override is required unless you changed config.
 

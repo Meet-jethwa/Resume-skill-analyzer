@@ -2,6 +2,7 @@ import { useState } from 'react'
 import axios from 'axios'
 
 export default function ResumeForm() {
+  // Fall back to local backend when VITE_API_URL is not configured.
   const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5001'
 
   const [resumeText, setResumeText] = useState('')
@@ -24,6 +25,7 @@ export default function ResumeForm() {
     'Database': ['Database Engineer', 'DBA'],
   }
 
+  // Centralize role filtering so render stays focused on UI markup.
   const getFilteredRoles = () => {
     if (roleFilter === 'all') return roles;
     return roles.filter(role => roleCategories[roleFilter]?.includes(role) || false)
@@ -44,6 +46,7 @@ export default function ResumeForm() {
     setRoleFilter('all')
 
     try {
+      // Use FormData so the API can handle either plain text or uploaded PDF.
       const formData = new FormData()
       if (pdfFile) {
         formData.append('pdf', pdfFile)
@@ -66,7 +69,7 @@ export default function ResumeForm() {
       setRoles(res.data.suggestedRoles)
       setResumeScore(res.data.resumeScore)
       setSkillMatch(res.data.skillMatch)
-    } catch (err) {
+    } catch {
       setError('Analysis failed. Make sure the server is running.')
     } finally {
       setLoading(false)
@@ -83,6 +86,7 @@ export default function ResumeForm() {
     setTimeout(() => setCopyFeedback(''), 2000)
   }
 
+  // Reset all inputs and analysis outputs back to initial state.
   const handleClearAll = () => {
     setResumeText('')
     setJobDescription('')

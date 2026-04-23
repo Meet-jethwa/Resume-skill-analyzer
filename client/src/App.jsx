@@ -4,6 +4,7 @@ import ResumeForm from './components/ResumeForm'
 import History from './components/History'
 
 function App() {
+  // Keep page switching local by toggling analyzer/history state.
   const [currentPage, setCurrentPage] = useState('analyzer') // 'analyzer' or 'history'
 
   return (
@@ -27,6 +28,7 @@ function App() {
         </nav>
       </header>
       <main className="app-main">
+        {/* Render a single page view without introducing router dependencies. */}
         {currentPage === 'analyzer' ? (
           <ResumeForm />
         ) : (

@@ -8,6 +8,7 @@ dotenv.config();
 
 const app = express();
 
+// Restrict API access to trusted frontend origins.
 app.use(cors({
   origin: [
     'http://localhost:5173',

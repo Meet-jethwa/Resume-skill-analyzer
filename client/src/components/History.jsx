@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import axios from 'axios'
 import './History.css'
 
@@ -11,11 +11,7 @@ export default function History({ onBack }) {
   const [selectedAnalysis, setSelectedAnalysis] = useState(null)
   const [filterCategory, setFilterCategory] = useState('all')
 
-  useEffect(() => {
-    fetchHistory()
-  }, [])
-
-  const fetchHistory = async () => {
+  const fetchHistory = useCallback(async () => {
     try {
       setLoading(true)
       const res = await axios.get(`${apiUrl}/api/history`)
@@ -27,7 +23,12 @@ export default function History({ onBack }) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [apiUrl])
+
+  // Load history once when the component first mounts.
+  useEffect(() => {
+    fetchHistory()
+  }, [fetchHistory])
 
   const handleDelete = async (id) => {
     if (!confirm('Delete this analysis?')) return
@@ -48,6 +49,7 @@ export default function History({ onBack }) {
     setSelectedAnalysis(analysis)
   }
 
+  // Group detected skills by broad domain for easier detail view scanning.
   const getSkillsByCategory = (skills) => {
     const categoryMap = {
       'Frontend': ['React', 'Vue', 'Angular', 'JavaScript', 'TypeScript', 'HTML', 'CSS'],
@@ -62,7 +64,7 @@ export default function History({ onBack }) {
       filtered[cat] = skills.filter(s => categoryMap[cat].includes(s));
     });
 
-    return Object.entries(filtered).filter(([_, v]) => v.length > 0);
+    return Object.entries(filtered).filter(([, values]) => values.length > 0);
   }
 
   if (selectedAnalysis) {
